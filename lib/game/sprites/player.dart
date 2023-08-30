@@ -92,12 +92,18 @@ class Player extends SpriteGroupComponent<PlayerState>
   void moveLeft() {
     _hAxisInput = 0;
 
+    current = PlayerState.left;
+
+    _hAxisInput += movingLeftInput;
     // Add a Player to the game: Add logic for moving left
   }
 
   void moveRight() {
     _hAxisInput = 0;
 
+    current = PlayerState.right;
+
+    _hAxisInput += movingRightInput;
     // Add a Player to the game: Add logic for moving right
   }
 
