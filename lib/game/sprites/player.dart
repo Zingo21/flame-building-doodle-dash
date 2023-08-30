@@ -84,6 +84,20 @@ class Player extends SpriteGroupComponent<PlayerState>
   bool onKeyEvent(RawKeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
     _hAxisInput = 0;
 
+
+    if (keysPressed.contains(LogicalKeyboardKey.arrowLeft)) {
+      moveLeft();
+    }
+
+    if (keysPressed.contains(LogicalKeyboardKey.arrowRight)) {
+      moveRight();
+    }
+
+    // Cheat that is good to have
+    if (keysPressed.contains(LogicalKeyboardKey.arrowUp)) {
+      // jump();
+    }
+
     // Add a Player to the game: Add keypress logic
 
     return true;
