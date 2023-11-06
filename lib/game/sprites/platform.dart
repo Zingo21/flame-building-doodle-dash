@@ -69,11 +69,33 @@ abstract class Platform<T> extends SpriteGroupComponent<T>
 
     await add(hitbox);
 
+    final int rand = Random().nextInt(100);
+    if (rand > 80) isMoving = true;
     // More on Platforms: Set isMoving
   }
 
+  void _move(double dt) {
+    if (!isMoving) return;
+
+    final double gameWidth = gameRef.size.x;
+
+    if (position.x <= 0) {
+      direction = 1;
+    } else if (position.x >= gameWidth - size.x) {
+      direction = -1;
+    }
+
+    _velocity.x = direction * speed;
+
+    position += _velocity * dt;
+  }
   // More on Platforms: Add _move method
 
+  @override
+  void update(double dt) {
+    _move(dt);
+    super.update(dt);
+  }
   // More on Platforms: Override update method
 }
 
@@ -82,10 +104,77 @@ abstract class Platform<T> extends SpriteGroupComponent<T>
 // Add platforms: Add NormalPlatform class
 
 // More on Platforms: Add BrokenPlatform State Enum
+enum BrokenPlatformState { cracked, broken }
+
+class BrokenPlatform extends Platform<BrokenPlatformState> {
+  BrokenPlatform({super.position});
+
+  @override
+  Future<void>? onLoad() async {
+    await super.onLoad();
+
+    sprites = <BrokenPlatformState, Sprite>{
+      BrokenPlatformState.cracked:
+          await gameRef.loadSprite('game/platform_cracked_monitor.png'),
+      BrokenPlatformState.broken:
+          await gameRef.loadSprite('game/platform_monitor_broken.png'),
+    };
+
+    current = BrokenPlatformState.cracked;
+    size = Vector2(115, 84);
+  }
+
+  void breakPlatform() {
+    current = BrokenPlatformState.broken;
+  }
+}
 
 // More on Platforms: Add BrokenPlatform class
 
 // More on Platforms: Add Add Spring State Enum
+enum SpringState { down, up }
+
+class SpringBoard extends Platform<SpringState> {
+  SpringBoard({
+    super.position,
+  });
+
+  @override
+  Future<void>? onLoad() async {
+    await super.onLoad();
+
+    sprites = <SpringState, Sprite>{
+      SpringState.down:
+          await gameRef.loadSprite('game/platform_trampoline_down.png'),
+      SpringState.up:
+          await gameRef.loadSprite('game/platform_trampoline_up.png'),
+    };
+
+    current = SpringState.up;
+
+    size = Vector2(100, 45);
+  }
+
+  @override
+  void onCollisionStart(
+      Set<Vector2> intersectionPoints, PositionComponent other) {
+    super.onCollisionStart(intersectionPoints, other);
+
+    bool isCollidingVertically =
+        (intersectionPoints.first.y - intersectionPoints.last.y).abs() < 5;
+
+    if (isCollidingVertically) {
+      current = SpringState.down;
+    }
+  }
+
+  @override
+  void onCollisionEnd(PositionComponent other) {
+    super.onCollisionEnd(other);
+
+    current = SpringState.up;
+  }
+} 
 
 // More on Platforms: Add SpringBoard Platform class
 
