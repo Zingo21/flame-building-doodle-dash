@@ -18,7 +18,56 @@ import '../doodle_dash.dart';
 /// Many platforms only need one Sprite, so [T] will be an enum that looks
 /// something like: `enum { only }`
 
-enum NormalPlatformState { only } 
+abstract class Platform<T> extends SpriteGroupComponent<T>
+    with HasGameRef<DoodleDash>, CollisionCallbacks {
+  final hitbox = RectangleHitbox();
+  bool isMoving = false;
+
+  double direction = 1;
+  final Vector2 _velocity = Vector2.zero();
+  double speed = 35;
+
+  Platform({
+    super.position,
+  }) : super(
+          size: Vector2.all(100),
+          priority: 2,
+        );
+
+  @override
+  Future<void>? onLoad() async {
+    await super.onLoad();
+
+    await add(hitbox);
+
+    final int rand = Random().nextInt(100);
+    if (rand > 80) isMoving = true;
+  }
+
+  void _move(double dt) {
+    if (!isMoving) return;
+
+    final double gameWidth = gameRef.size.x;
+
+    if (position.x <= 0) {
+      direction = 1;
+    } else if (position.x >= gameWidth - size.x) {
+      direction = -1;
+    }
+
+    _velocity.x = direction * speed;
+
+    position += _velocity * dt;
+  }
+
+  @override
+  void update(double dt) {
+    _move(dt);
+    super.update(dt);
+  }
+}
+
+enum NormalPlatformState { only }
 
 class NormalPlatform extends Platform<NormalPlatformState> {
   NormalPlatform({super.position});
@@ -45,65 +94,8 @@ class NormalPlatform extends Platform<NormalPlatformState> {
     size = spriteOptions[randSprite]!;
     await super.onLoad();
   }
-} 
-
-abstract class Platform<T> extends SpriteGroupComponent<T>
-    with HasGameRef<DoodleDash>, CollisionCallbacks {
-  final hitbox = RectangleHitbox();
-  bool isMoving = false;
-
-  double direction = 1;
-  final Vector2 _velocity = Vector2.zero();
-  double speed = 35;
-
-  Platform({
-    super.position,
-  }) : super(
-          size: Vector2.all(100),
-          priority: 2,
-        );
-
-  @override
-  Future<void>? onLoad() async {
-    await super.onLoad();
-
-    await add(hitbox);
-
-    final int rand = Random().nextInt(100);
-    if (rand > 80) isMoving = true;
-    // More on Platforms: Set isMoving
-  }
-
-  void _move(double dt) {
-    if (!isMoving) return;
-
-    final double gameWidth = gameRef.size.x;
-
-    if (position.x <= 0) {
-      direction = 1;
-    } else if (position.x >= gameWidth - size.x) {
-      direction = -1;
-    }
-
-    _velocity.x = direction * speed;
-
-    position += _velocity * dt;
-  }
-  // More on Platforms: Add _move method
-
-  @override
-  void update(double dt) {
-    _move(dt);
-    super.update(dt);
-  }
-  // More on Platforms: Override update method
 }
 
-// Add platforms: Add NormalPlatformState Enum
-
-// Add platforms: Add NormalPlatform class
-
-// More on Platforms: Add BrokenPlatform State Enum
 enum BrokenPlatformState { cracked, broken }
 
 class BrokenPlatform extends Platform<BrokenPlatformState> {
@@ -129,9 +121,6 @@ class BrokenPlatform extends Platform<BrokenPlatformState> {
   }
 }
 
-// More on Platforms: Add BrokenPlatform class
-
-// More on Platforms: Add Add Spring State Enum
 enum SpringState { down, up }
 
 class SpringBoard extends Platform<SpringState> {
@@ -174,14 +163,9 @@ class SpringBoard extends Platform<SpringState> {
 
     current = SpringState.up;
   }
-} 
-
-// More on Platforms: Add SpringBoard Platform class
-
-// Losing the game: Add EnemyPlatformState Enum
+}
 
 enum EnemyPlatformState { only }
-
 
 class EnemyPlatform extends Platform<EnemyPlatformState> {
   EnemyPlatform({super.position});
@@ -201,5 +185,3 @@ class EnemyPlatform extends Platform<EnemyPlatformState> {
     return super.onLoad();
   }
 }
-
-// Losing the game: Add EnemyPlatform class

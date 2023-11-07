@@ -27,7 +27,6 @@ abstract class PowerUp extends SpriteComponent
   }
 }
 
-// Powerups: Add Rocket class
 class Rocket extends PowerUp {
   @override
   double get jumpSpeedMultiplier => 3.5;
@@ -44,7 +43,6 @@ class Rocket extends PowerUp {
   }
 }
 
-// Powerups: Add NooglerHat class
 class NooglerHat extends PowerUp {
   @override
   double get jumpSpeedMultiplier => 2.5;

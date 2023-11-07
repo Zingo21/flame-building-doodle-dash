@@ -9,7 +9,6 @@ import 'package:flutter/material.dart';
 import './world.dart';
 import 'managers/managers.dart';
 import 'sprites/sprites.dart';
-// Add a Player to the game: import Sprites
 
 enum Character { dash, sparky }
 
@@ -24,8 +23,6 @@ class DoodleDash extends FlameGame
   ObjectManager objectManager = ObjectManager();
 
   late Player player;
-
-  // Add a Player to the game: Create a Player variable
 
   @override
   Future<void> onLoad() async {
@@ -42,9 +39,8 @@ class DoodleDash extends FlameGame
   void update(double dt) {
     super.update(dt);
 
-    // Losing the game: Add isGameOver check
     if (gameManager.isGameOver) {
-     return;
+      return;
     }
 
     if (gameManager.isIntro) {
@@ -62,7 +58,6 @@ class DoodleDash extends FlameGame
         camera.position.y + _world.size.y,
       );
       camera.worldBounds = worldBounds;
-
       if (player.isMovingDown) {
         camera.worldBounds = worldBounds;
       }
@@ -71,17 +66,14 @@ class DoodleDash extends FlameGame
       if (!player.isMovingDown && isInTopHalfOfScreen) {
         camera.followComponent(player);
       }
-      // Core gameplay: Add camera code to follow Dash during game play
 
       if (player.position.y >
-         camera.position.y +
-             _world.size.y +
-             player.size.y +
-             screenBufferSpace) {
-       onLose();
+          camera.position.y +
+              _world.size.y +
+              player.size.y +
+              screenBufferSpace) {
+        onLose();
       }
-      // Losing the game: Add the first loss condition.
-      // Game over if Dash falls off screen!
     }
   }
 
@@ -92,7 +84,6 @@ class DoodleDash extends FlameGame
 
   void initializeGameStart() {
     setCharacter();
-    // Add a Player to the game: Call setCharacter
 
     gameManager.reset();
 
@@ -103,18 +94,14 @@ class DoodleDash extends FlameGame
     player.reset();
     camera.worldBounds = Rect.fromLTRB(
       0,
-      -_world.size.y,
+      -_world.size.y, // top of screen is 0, so negative is already off screen
       camera.gameSize.x,
       _world.size.y +
-          screenBufferSpace,
+          screenBufferSpace, // makes sure bottom bound of game is below bottom of screen
     );
     camera.followComponent(player);
 
     player.resetPosition();
-
-    // Core gameplay: Reset player & camera boundaries
-
-    // Add a Player to the game: Reset Dash's position back to the start
 
     objectManager = ObjectManager(
         minVerticalDistanceToNextPlatform: levelManager.minDistance,
@@ -126,13 +113,11 @@ class DoodleDash extends FlameGame
   }
 
   void setCharacter() {
-     player = Player(
-     character: gameManager.character,
-     jumpSpeed: levelManager.startingJumpSpeed,
-   );       
-  add(player);
-    // Add a Player to the game: Initialize character
-    // Add a Player to the game: Add player
+    player = Player(
+      character: gameManager.character,
+      jumpSpeed: levelManager.startingJumpSpeed,
+    );
+    add(player);
   }
 
   void startGame() {
@@ -141,17 +126,15 @@ class DoodleDash extends FlameGame
     overlays.remove('mainMenuOverlay');
   }
 
-  // Losing the game: Add an onLose method
+  void resetGame() {
+    startGame();
+    overlays.remove('gameOverOverlay');
+  }
 
   void onLose() {
     gameManager.state = GameState.gameOver;
     player.removeFromParent();
     overlays.add('gameOverOverlay');
-  }  
-
-  void resetGame() {
-    startGame();
-    overlays.remove('gameOverOverlay');
   }
 
   void togglePauseState() {
@@ -169,7 +152,6 @@ class DoodleDash extends FlameGame
       objectManager.configure(levelManager.level, levelManager.difficulty);
 
       player.setJumpSpeed(levelManager.jumpSpeed);
-      // Core gameplay: Call setJumpSpeed
     }
   }
 }

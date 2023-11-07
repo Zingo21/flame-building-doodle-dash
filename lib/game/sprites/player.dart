@@ -41,32 +41,25 @@ class Player extends SpriteGroupComponent<PlayerState>
   Character character;
   double jumpSpeed;
   final double _gravity = 9;
-  // Core gameplay: Add _gravity property
 
   @override
   Future<void> onLoad() async {
     await super.onLoad();
 
-    await add(CircleHitbox()); 
+    await add(CircleHitbox());
 
     await _loadCharacterSprites();
     current = PlayerState.center;
-    // Add a Player to the game: loadCharacterSprites
-    // Add a Player to the game: Default Dash onLoad to center state
   }
 
   @override
   void update(double dt) {
-    // Add a Player to the game: Add game state check
     if (gameRef.gameManager.isIntro || gameRef.gameManager.isGameOver) return;
-    
-    _velocity.x = _hAxisInput * jumpSpeed;
 
-    // Add a Player to the game: Add calcualtion for Dash's horizontal velocity
+    _velocity.x = _hAxisInput * jumpSpeed;
 
     final double dashHorizontalCenter = size.x / 2;
 
-    // Add a Player to the game: Add infinite side boundaries logic
     if (position.x < dashHorizontalCenter) {
       position.x = gameRef.size.x - (dashHorizontalCenter);
     }
@@ -74,18 +67,16 @@ class Player extends SpriteGroupComponent<PlayerState>
       position.x = dashHorizontalCenter;
     }
 
-    _velocity.y = _gravity;
+    _velocity.y += _gravity;
 
-    // Add a Player to the game: Calculate Dash's current position based on
-    // her velocity over elapsed time since last update cycle
     position += _velocity * dt;
+
     super.update(dt);
   }
 
   @override
   bool onKeyEvent(RawKeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
     _hAxisInput = 0;
-
 
     if (keysPressed.contains(LogicalKeyboardKey.arrowLeft)) {
       moveLeft();
@@ -95,15 +86,53 @@ class Player extends SpriteGroupComponent<PlayerState>
       moveRight();
     }
 
-    // Cheat that is good to have
+    // During development, its useful to "cheat"
     if (keysPressed.contains(LogicalKeyboardKey.arrowUp)) {
       // jump();
     }
 
-    // Add a Player to the game: Add keypress logic
-
     return true;
   }
+
+  void moveLeft() {
+    _hAxisInput = 0;
+
+    if (isWearingHat) {
+      current = PlayerState.nooglerLeft;
+    } else if (!hasPowerup) {
+      current = PlayerState.left;
+    }
+
+    _hAxisInput += movingLeftInput;
+  }
+
+  void moveRight() {
+    _hAxisInput = 0; // by default not going left or right
+
+    if (isWearingHat) {
+      current = PlayerState.nooglerRight;
+    } else if (!hasPowerup) {
+      current = PlayerState.right;
+    }
+    _hAxisInput += movingRightInput;
+  }
+
+  void resetDirection() {
+    _hAxisInput = 0;
+  }
+
+  bool get hasPowerup =>
+      current == PlayerState.rocket ||
+      current == PlayerState.nooglerLeft ||
+      current == PlayerState.nooglerRight ||
+      current == PlayerState.nooglerCenter;
+
+  bool get isInvincible => current == PlayerState.rocket;
+
+  bool get isWearingHat =>
+      current == PlayerState.nooglerLeft ||
+      current == PlayerState.nooglerRight ||
+      current == PlayerState.nooglerCenter;
 
   @override
   void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
@@ -118,94 +147,50 @@ class Player extends SpriteGroupComponent<PlayerState>
 
     if (isMovingDown && isCollidingVertically) {
       current = PlayerState.center;
-      if (other is NormalPlatform) {
-        jump();
-        return;
-      }else if (other is SpringBoard) {
-       jump(specialJumpSpeed: jumpSpeed * 2);
-       return;
-     } else if (other is BrokenPlatform &&
-         other.current == BrokenPlatformState.cracked) {
-       jump();
-       other.breakPlatform();
-       return;
-     } 
+      switch (other) {
+        case NormalPlatform():
+          jump();
+          return;
+        case SpringBoard():
+          jump(specialJumpSpeed: jumpSpeed * 2);
+          return;
+        case BrokenPlatform() when other.current == BrokenPlatformState.cracked:
+          jump();
+          other.breakPlatform();
+          return;
+      }
     }
 
-    if (!hasPowerup && other is Rocket) {
-      current = PlayerState.rocket;
-      other.removeFromParent();
-      jump(specialJumpSpeed: jumpSpeed * other.jumpSpeedMultiplier);
-      return;
-    } else if (!hasPowerup && other is NooglerHat) {
-      if (current == PlayerState.center) current = PlayerState.nooglerCenter;
-      if (current == PlayerState.left) current = PlayerState.nooglerLeft;
-      if (current == PlayerState.right) current = PlayerState.nooglerRight;
-      other.removeFromParent();
-      _removePowerupAfterTime(other.activeLengthInMS);
-      jump(specialJumpSpeed: jumpSpeed * other.jumpSpeedMultiplier);
-      return;
+    if (!hasPowerup) {
+      switch (other) {
+        case Rocket():
+          current = PlayerState.rocket;
+          other.removeFromParent();
+          jump(specialJumpSpeed: jumpSpeed * other.jumpSpeedMultiplier);
+          return;
+        case NooglerHat():
+          current = switch (current) {
+            PlayerState.center => PlayerState.nooglerCenter,
+            PlayerState.left => PlayerState.nooglerLeft,
+            PlayerState.right => PlayerState.nooglerRight,
+            _ => current,
+          };
+          other.removeFromParent();
+          _removePowerupAfterTime(other.activeLengthInMS);
+          jump(specialJumpSpeed: jumpSpeed * other.jumpSpeedMultiplier);
+          return;
+      }
     }
   }
 
-  void moveLeft() {
-    _hAxisInput = 0;
-  if (isWearingHat) {
-      current = PlayerState.nooglerLeft;
-    } else if (!hasPowerup) {
-      current = PlayerState.left;
-    }
-      _hAxisInput += movingLeftInput;
-      // Add a Player to the game: Add logic for moving left
-    }
-
-  void moveRight() {
-    _hAxisInput = 0;
-
-    if (isWearingHat) {
-     current = PlayerState.nooglerRight;
-   } else if (!hasPowerup) {
-     current = PlayerState.right;
-   }
-
-    _hAxisInput += movingRightInput;
-    // Add a Player to the game: Add logic for moving right
+  void jump({double? specialJumpSpeed}) {
+    _velocity.y = specialJumpSpeed != null ? -specialJumpSpeed : -jumpSpeed;
   }
-
-  void resetDirection() {
-    _hAxisInput = 0;
-  }
-
-  // Powerups: Add hasPowerup getter
-  bool get hasPowerup =>
-     current == PlayerState.rocket ||
-     current == PlayerState.nooglerLeft ||
-     current == PlayerState.nooglerRight ||
-     current == PlayerState.nooglerCenter;
-
- bool get isInvincible => current == PlayerState.rocket;
-
- bool get isWearingHat =>
-     current == PlayerState.nooglerLeft ||
-     current == PlayerState.nooglerRight ||
-     current == PlayerState.nooglerCenter;
-
-  // Powerups: Add isInvincible getter
-
-  // Powerups: Add isWearingHat getter
-
-  // Core gameplay: Override onCollision callback
-
-  // Core gameplay: Add a jump method
 
   void _removePowerupAfterTime(int ms) {
     Future.delayed(Duration(milliseconds: ms), () {
       current = PlayerState.center;
     });
-  }
-
-  void jump({double? specialJumpSpeed}) {
-  _velocity.y = specialJumpSpeed != null ? -specialJumpSpeed : -jumpSpeed;
   }
 
   void setJumpSpeed(double newJumpSpeed) {
